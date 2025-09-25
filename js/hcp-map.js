@@ -45,7 +45,12 @@ class HCPMap {
       })
       .catch(error => {
         console.error('Error loading SVG map:', error);
-        mapContainer.innerHTML = '<p>Error loading map</p>';
+        const isFileProtocol = location.protocol === 'file:';
+        if (isFileProtocol) {
+          mapContainer.innerHTML = '<p>Map cannot load via file://. Please serve the site with a local server or deploy to GitHub Pages.</p>';
+        } else {
+          mapContainer.innerHTML = '<p>Error loading map</p>';
+        }
       });
   }
 
@@ -737,7 +742,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.hcpMap = new HCPMap();
   
   // Set current year in footer
-  document.getElementById('year').textContent = new Date().getFullYear();
+  const yearEl = document.getElementById('year');
+  if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+  }
 });
 
 // Add some utility functions for external use
