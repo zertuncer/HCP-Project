@@ -32,22 +32,59 @@ class HCPMap {
       </div>
     `;
     
-    // Load SVG
+    // Prefer inline SVG from template if present
+    const inlineTpl = document.getElementById('world-map-template');
+    const inlineSVG = inlineTpl && inlineTpl.innerHTML && inlineTpl.innerHTML.trim().length > 0
+      ? inlineTpl.innerHTML
+      : null;
+
+    const initWithSvgText = (svgText) => {
+      svgContainer.innerHTML += svgText;
+      mapContainer.appendChild(svgContainer);
+      // Initialize SVG interactions
+      this.initializeSVGInteractions();
+      this.initializeZoom();
+    };
+
+    if (inlineSVG) {
+      // Use inline SVG (works offline/file://)
+      initWithSvgText(inlineSVG);
+      return;
+    }
+
+    // If running via file://, try <object> fallback instead of fetch
+    if (location.protocol === 'file:') {
+      const obj = document.createElement('object');
+      obj.type = 'image/svg+xml';
+      obj.data = 'assets/world-map.svg';
+      obj.style.display = 'none';
+      obj.addEventListener('load', () => {
+        try {
+          const svgDoc = obj.contentDocument;
+          const svgEl = svgDoc && svgDoc.documentElement;
+          if (svgEl) {
+            initWithSvgText(svgEl.outerHTML);
+            obj.remove();
+            return;
+          }
+        } catch (e) {
+          console.error('Error accessing embedded SVG via <object>:', e);
+        }
+        mapContainer.innerHTML = '<p>Map could not be loaded from file. Please run a local server or use GitHub Pages.</p>';
+      });
+      document.body.appendChild(obj);
+      return;
+    }
+
+    // Fallback: fetch SVG from assets (requires http/https)
     fetch('assets/world-map.svg')
       .then(response => response.text())
-      .then(svgText => {
-        svgContainer.innerHTML += svgText;
-        mapContainer.appendChild(svgContainer);
-        
-        // Initialize SVG interactions
-        this.initializeSVGInteractions();
-        this.initializeZoom();
-      })
+      .then(initWithSvgText)
       .catch(error => {
         console.error('Error loading SVG map:', error);
         const isFileProtocol = location.protocol === 'file:';
         if (isFileProtocol) {
-          mapContainer.innerHTML = '<p>Map cannot load via file://. Please serve the site with a local server or deploy to GitHub Pages.</p>';
+          mapContainer.innerHTML = '<p>Map cannot load via file://. Either run a local server or paste the SVG into a <code>&lt;template id="world-map-template"&gt;</code> in index.html.</p>';
         } else {
           mapContainer.innerHTML = '<p>Error loading map</p>';
         }
