@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HCP Directory — Loop and Learn</title>
+    <link rel="icon" type="image/svg+xml" href="assets/logo-ring.svg" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/hcp.css" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+
+    <main class="container">
+      <article id="content" class="content">
+        <section class="content-section">
+          <div class="page-header">
+            <h1>Healthcare Provider Directory</h1>
+            <div class="text-content">
+              <p>Find Loop-friendly healthcare providers around the world. Click on a country to see available providers in that region.</p>
+              
+              <div class="color-guide">
+                <h3>🎨 Color Guide</h3>
+                <div class="color-guide-grid">
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #e5e7eb;"></div>
+                    <span class="color-label">No Providers</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #bbf7d0;"></div>
+                    <span class="color-label">Limited (1-2)</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #86efac;"></div>
+                    <span class="color-label">Some (3-5)</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #4ade80;"></div>
+                    <span class="color-label">Good (6-10)</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #22c55e;"></div>
+                    <span class="color-label">Excellent (11-20)</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #16a34a;"></div>
+                    <span class="color-label">Very Good (21-50)</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #15803d;"></div>
+                    <span class="color-label">Outstanding (51-100)</span>
+                  </div>
+                  <div class="color-guide-item">
+                    <div class="color-indicator" style="background-color: #14532d;"></div>
+                    <span class="color-label">Exceptional (100+)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          
+          <!-- Navigator Section -->
+          <div class="hcp-navigator">
+            <div class="navigator-controls">
+              <div class="search-box">
+                <input type="text" id="countrySearch" placeholder="Search countries..." />
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+              </div>
+              
+              <button id="resetFilters" class="reset-btn">Clear Search</button>
+            </div>
+            
+            <div class="stats-summary">
+              <div class="stat-item">
+                <span class="stat-number" id="totalCountries">0</span>
+                <span class="stat-label">Countries</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="totalProviders">0</span>
+                <span class="stat-label">Providers</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="activeCountries">0</span>
+                <span class="stat-label">Active</span>
+              </div>
+            </div>
+          </div>
+          </div>
+          
+          <!-- Map Container -->
+          <div class="map-container">
+            <div id="hcpMap" class="hcp-map"></div>
+          </div>
+          
+          <!-- Countries List -->
+          <div class="countries-list-section">
+            <h3>🌍 Countries with Healthcare Providers</h3>
+            <div class="countries-grid" id="countriesGrid">
+              <!-- Countries will be populated here -->
+            </div>
+          </div>
+          
+          <!-- HCP List Container -->
+          <div class="hcp-list-container" id="hcpListContainer" style="display: none;">
+            <div class="hcp-list-header">
+              <h2 id="countryTitle">Healthcare Providers</h2>
+              <button class="close-btn" id="closeHcpList">×</button>
+            </div>
+            <div class="hcp-search-container">
+              <div class="hcp-search-box">
+                <input type="text" id="hcpSearch" placeholder="Search by name, specialty, city, hospital..." />
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+              </div>
+              <button id="clearHcpSearch" class="clear-hcp-search-btn">Clear</button>
+            </div>
+            <div class="hcp-list" id="hcpList">
+              <!-- HCP items will be populated here -->
+            </div>
+          </div>
+        </section>
+      </article>
+    </main>
+
+
+    <!-- HCP Detail Modal -->
+    <div class="hcp-modal" id="hcpModal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Provider Details</h3>
+          <button class="close-btn" id="closeModal">×</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Provider details will be populated here -->
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Scripts -->
+    <script src="js/hcp-data.js"></script>
+    <script src="js/hcp-map.js"></script>
+    <script src="js/hcp-page.js"></script>
+  </body>
+</html>
