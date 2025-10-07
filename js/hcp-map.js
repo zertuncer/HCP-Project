@@ -18,6 +18,79 @@ class HCPMap {
     this.loadSVGMap();
   }
 
+  // Map CSV country names to SVG canonical names
+  canonicalizeCountryName(country) {
+    const aliases = {
+      'England / Great Britain': 'United Kingdom',
+      'The Netherlands / Nederland': 'Netherlands',
+      'Czech republic': 'Czech Republic',
+      'Türkiye': 'Turkey', // map localized to canonical
+      'UAE': 'United Arab Emirates',
+      'Korea, South': 'South Korea'
+    };
+    return aliases[country] || country;
+  }
+
+  // Find matching SVG elements for a given country using multiple strategies
+  findCountryElements(country) {
+    let countryElements = [];
+
+    const selectors = [
+      `path[class="${country}"]`,        // exact class match (handles spaces)
+      `.${CSS.escape(country)}`,           // CSS-escaped class selector
+      `path[class*="${country}"]`        // partial class match
+    ];
+
+    for (const selector of selectors) {
+      try {
+        countryElements = document.querySelectorAll(selector);
+        if (countryElements.length > 0) break;
+      } catch (e) {
+        // invalid selector, continue
+      }
+    }
+
+    if (countryElements.length === 0) {
+      const countryCodeMap = {
+        'Argentina': 'AR',
+        'Australia': 'AU',
+        'Austria': 'AT',
+        'Brazil': 'BR',
+        'Canada': 'CA',
+        'Chile': 'CL',
+        'Colombia': 'CO',
+        'Czech Republic': 'CZ',
+        'Denmark': 'DK',
+        'Germany': 'DE',
+        'Greece': 'GR',
+        'Israel': 'IL',
+        'Italy': 'IT',
+        'Japan': 'JP',
+        'Netherlands': 'NL',
+        'Norway': 'NO',
+        'Poland': 'PL',
+        'Portugal': 'PT',
+        'Saudi Arabia': 'SA',
+        'Slovenia': 'SI',
+        'South Korea': 'KR',
+        'Spain': 'ES',
+        'Sweden': 'SE',
+        'Switzerland': 'CH',
+        'Turkey': 'TR',
+        'United Arab Emirates': 'AE',
+        'United Kingdom': 'GB',
+        'United States': 'US',
+        'New Zealand': 'NZ'
+      };
+      const countryCode = countryCodeMap[country];
+      if (countryCode) {
+        countryElements = document.querySelectorAll(`#${countryCode}`);
+      }
+    }
+
+    return countryElements;
+  }
+
   loadSVGMap() {
     const mapContainer = document.getElementById('hcpMap');
     
@@ -32,62 +105,20 @@ class HCPMap {
       </div>
     `;
     
-    // Prefer inline SVG from template if present
-    const inlineTpl = document.getElementById('world-map-template');
-    const inlineSVG = inlineTpl && inlineTpl.innerHTML && inlineTpl.innerHTML.trim().length > 0
-      ? inlineTpl.innerHTML
-      : null;
-
-    const initWithSvgText = (svgText) => {
-      svgContainer.innerHTML += svgText;
-      mapContainer.appendChild(svgContainer);
-      // Initialize SVG interactions
-      this.initializeSVGInteractions();
-      this.initializeZoom();
-    };
-
-    if (inlineSVG) {
-      // Use inline SVG (works offline/file://)
-      initWithSvgText(inlineSVG);
-      return;
-    }
-
-    // If running via file://, try <object> fallback instead of fetch
-    if (location.protocol === 'file:') {
-      const obj = document.createElement('object');
-      obj.type = 'image/svg+xml';
-      obj.data = 'assets/world-map.svg';
-      obj.style.display = 'none';
-      obj.addEventListener('load', () => {
-        try {
-          const svgDoc = obj.contentDocument;
-          const svgEl = svgDoc && svgDoc.documentElement;
-          if (svgEl) {
-            initWithSvgText(svgEl.outerHTML);
-            obj.remove();
-            return;
-          }
-        } catch (e) {
-          console.error('Error accessing embedded SVG via <object>:', e);
-        }
-        mapContainer.innerHTML = '<p>Map could not be loaded from file. Please run a local server or use GitHub Pages.</p>';
-      });
-      document.body.appendChild(obj);
-      return;
-    }
-
-    // Fallback: fetch SVG from assets (requires http/https)
+    // Load SVG
     fetch('assets/world-map.svg')
       .then(response => response.text())
-      .then(initWithSvgText)
+      .then(svgText => {
+        svgContainer.innerHTML += svgText;
+        mapContainer.appendChild(svgContainer);
+        
+        // Initialize SVG interactions
+        this.initializeSVGInteractions();
+        this.initializeZoom();
+      })
       .catch(error => {
         console.error('Error loading SVG map:', error);
-        const isFileProtocol = location.protocol === 'file:';
-        if (isFileProtocol) {
-          mapContainer.innerHTML = '<p>Map cannot load via file://. Either run a local server or paste the SVG into a <code>&lt;template id="world-map-template"&gt;</code> in index.html.</p>';
-        } else {
-          mapContainer.innerHTML = '<p>Error loading map</p>';
-        }
+        mapContainer.innerHTML = '<p>Error loading map</p>';
       });
   }
 
@@ -104,8 +135,12 @@ class HCPMap {
       return '#14532d'; // Darkest green (100+ için yeni kategori)
     };
 
-    // Color countries based on HCP data
+    // Color now, and recolor again after remote data loads
     this.colorCountries(getColorIntensity);
+    window.addEventListener('hcpDataLoaded', () => {
+      this.colorCountries(getColorIntensity);
+      this.addSVGEventListeners();
+    });
     
     // Add event listeners
     this.addSVGEventListeners();
@@ -115,68 +150,14 @@ class HCPMap {
   }
 
   colorCountries(getColorIntensity) {
-    const countries = getAllCountries();
+    const countries = Array.isArray(window.CANONICAL_COUNTRIES) ? window.CANONICAL_COUNTRIES : getAllCountries();
     
     countries.forEach(country => {
+      const svgCountry = this.canonicalizeCountryName(country);
       const hcpCount = getCountryData(country).length;
       const color = getColorIntensity(hcpCount);
-      
-      // Find country elements in SVG by both class and id
-      let countryElements = document.querySelectorAll(`.${country}`);
-      
-      // Special case for United Kingdom (has space in class name)
-      if (country === 'United Kingdom') {
-        countryElements = document.querySelectorAll('path[class="United Kingdom"]');
-      }
-      
-      // Special case for United States (has space in class name)
-      if (country === 'United States') {
-        countryElements = document.querySelectorAll('path[class="United States"]');
-      }
-      
-      // Special case for New Zealand (has space in class name)
-      if (country === 'New Zealand') {
-        countryElements = document.querySelectorAll('path[class="New Zealand"]');
-      }
-      
-      // If no elements found by class, try by id (country code mapping)
-      if (countryElements.length === 0) {
-        const countryCodeMap = {
-          'Austria': 'AT',
-          'Brazil': 'BR', 
-          'Germany': 'DE',
-          'Spain': 'ES',
-          'Italy': 'IT',
-          'Netherlands': 'NL',
-          'Poland': 'PL',
-          'Portugal': 'PT',
-          'Slovenia': 'SI',
-          'Sweden': 'SE',
-          'Switzerland': 'CH',
-          'Czech Republic': 'CZ',
-          'Colombia': 'CO',
-          'Israel': 'IL',
-          'Argentina': 'AR',
-          'Australia': 'AU',
-          'Canada': 'CA',
-          'Chile': 'CL',
-          'Denmark': 'DK',
-          'Greece': 'GR',
-          'Japan': 'JP',
-          'New Zealand': 'NZ',
-          'Norway': 'NO',
-          'Saudi Arabia': 'SA',
-          'South Korea': 'KR',
-          'Turkey': 'TR',
-          'United Arab Emirates': 'AE',
-          'United States': 'US'
-        };
-        
-        const countryCode = countryCodeMap[country];
-        if (countryCode) {
-          countryElements = document.querySelectorAll(`#${countryCode}`);
-        }
-      }
+
+      const countryElements = this.findCountryElements(svgCountry);
       
       countryElements.forEach(element => {
         element.style.fill = color;
@@ -185,72 +166,18 @@ class HCPMap {
         element.style.cursor = 'pointer';
         
         // Store country data
-        element.country = country;
+        element.country = country; // keep original CSV key for data lookup
         element.hcpCount = hcpCount;
       });
     });
   }
 
   addSVGEventListeners() {
-    const countries = getAllCountries();
+    const countries = Array.isArray(window.CANONICAL_COUNTRIES) ? window.CANONICAL_COUNTRIES : getAllCountries();
     
     countries.forEach(country => {
-      // Find country elements by both class and id
-      let countryElements = document.querySelectorAll(`.${country}`);
-      
-      // Special case for United Kingdom (has space in class name)
-      if (country === 'United Kingdom') {
-        countryElements = document.querySelectorAll('path[class="United Kingdom"]');
-      }
-      
-      // Special case for United States (has space in class name)
-      if (country === 'United States') {
-        countryElements = document.querySelectorAll('path[class="United States"]');
-      }
-      
-      // Special case for New Zealand (has space in class name)
-      if (country === 'New Zealand') {
-        countryElements = document.querySelectorAll('path[class="New Zealand"]');
-      }
-      
-      // If no elements found by class, try by id (country code mapping)
-      if (countryElements.length === 0) {
-        const countryCodeMap = {
-          'Austria': 'AT',
-          'Brazil': 'BR', 
-          'Germany': 'DE',
-          'Spain': 'ES',
-          'Italy': 'IT',
-          'Netherlands': 'NL',
-          'Poland': 'PL',
-          'Portugal': 'PT',
-          'Slovenia': 'SI',
-          'Sweden': 'SE',
-          'Switzerland': 'CH',
-          'Czech Republic': 'CZ',
-          'Colombia': 'CO',
-          'Israel': 'IL',
-          'Argentina': 'AR',
-          'Australia': 'AU',
-          'Canada': 'CA',
-          'Chile': 'CL',
-          'Denmark': 'DK',
-          'Greece': 'GR',
-          'Japan': 'JP',
-          'New Zealand': 'NZ',
-          'Norway': 'NO',
-          'Saudi Arabia': 'SA',
-          'South Korea': 'KR',
-          'Turkey': 'TR',
-          'United Arab Emirates': 'AE',
-          'United States': 'US'
-        };
-        
-        const countryCode = countryCodeMap[country];
-        if (countryCode) {
-          countryElements = document.querySelectorAll(`#${countryCode}`);
-        }
-      }
+      const svgCountry = this.canonicalizeCountryName(country);
+      const countryElements = this.findCountryElements(svgCountry);
       
       countryElements.forEach(element => {
         // Click event
@@ -779,10 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.hcpMap = new HCPMap();
   
   // Set current year in footer
-  const yearEl = document.getElementById('year');
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
-  }
+  document.getElementById('year').textContent = new Date().getFullYear();
 });
 
 // Add some utility functions for external use

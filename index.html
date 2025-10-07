@@ -12,11 +12,6 @@
   </head>
   <body>
 
-    <!-- Inline world map template for offline/file:// support -->
-    <template id="world-map-template" style="display:none">
-      <!-- Paste of assets/world-map.svg will be injected here to support file:// usage. -->
-    </template>
-
     <main class="container">
       <article id="content" class="content">
         <section class="content-section">
@@ -107,7 +102,7 @@
               <!-- Countries will be populated here -->
             </div>
           </div>
-          
+
           <!-- HCP List Container -->
           <div class="hcp-list-container" id="hcpListContainer" style="display: none;">
             <div class="hcp-list-header">
@@ -128,6 +123,16 @@
               <!-- HCP items will be populated here -->
             </div>
           </div>
+          
+          <!-- Add Provider (opens modal) -->
+          <div class="countries-list-section">
+            <button id="openDemoModal" class="btn btn-primary add-provider-btn">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" focusable="false">
+                <path d="M12 5c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1h-5v5c0 .552-.448 1-1 1s-1-.448-1-1v-5H6c-.552 0-1-.448-1-1s.448-1 1-1h5V6c0-.552.448-1 1-1z"/>
+              </svg>
+              <span>Add a Provider</span>
+            </button>
+          </div>
         </section>
       </article>
     </main>
@@ -146,10 +151,44 @@
       </div>
     </div>
 
+    <!-- Demo Modal (Form inside modal) -->
+    <div class="hcp-modal" id="demoModal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Add a Provider</h3>
+          <button class="close-btn" id="closeDemoModal">×</button>
+        </div>
+        <div class="modal-body">
+          <iframe
+            src="https://docs.google.com/forms/d/e/1FAIpQLSfWwVdhqpsk46xifo2etJJhw55vcHMs5IktSVNRIOmVi1CXfg/viewform?embedded=true"
+            frameborder="0"
+            marginheight="0"
+            marginwidth="0"
+            loading="lazy"
+            style="width: 100%; height: 75vh; border: 0; display: block;"
+          >Loading…</iframe>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Scripts -->
+    <script src="js/countries.js"></script>
     <script src="js/hcp-data.js"></script>
     <script src="js/hcp-map.js"></script>
     <script src="js/hcp-page.js"></script>
+    <script>
+      (function() {
+        const openBtn = document.getElementById('openDemoModal');
+        const demoModal = document.getElementById('demoModal');
+        const closeBtn = document.getElementById('closeDemoModal');
+        if (openBtn && demoModal && closeBtn) {
+          openBtn.addEventListener('click', () => { demoModal.style.display = 'flex'; });
+          closeBtn.addEventListener('click', () => { demoModal.style.display = 'none'; });
+          demoModal.addEventListener('click', (e) => { if (e.target === demoModal) demoModal.style.display = 'none'; });
+          document.addEventListener('keydown', (e) => { if (e.key === 'Escape') demoModal.style.display = 'none'; });
+        }
+      })();
+    </script>
   </body>
 </html>

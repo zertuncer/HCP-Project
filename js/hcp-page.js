@@ -1,5 +1,5 @@
 // HCP Page specific functionality
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Footer removed - no year element to set
   
   // Theme toggle removed with header
@@ -7,9 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Language switcher removed - using English only
   
   // Initialize navigator functionality
+  try { await loadHcpDataFromSheet?.(); } catch (e) { console.warn('Sheet load failed', e); }
   initializeNavigator();
-  
-  // Initialize countries list
   initializeCountriesList();
 });
 
@@ -98,7 +97,6 @@ function filterCountries(searchTerm) {
   
   // Country name mapping from CSV to SVG
   const countryNameMap = {
-    'Turkey': 'Türkiye', // CSV'de Türkiye, SVG'de Turkey
     'United Kingdom': 'England / Great Britain', // CSV'de England / Great Britain
     'Netherlands': 'The Netherlands / Nederland', // CSV'de The Netherlands / Nederland
     'Czech Republic': 'Czech republic' // CSV'de Czech republic
@@ -202,7 +200,6 @@ function filterCountriesList(searchTerm) {
   
   // Country name mapping from CSV to SVG
   const countryNameMap = {
-    'Turkey': 'Türkiye', // CSV'de Türkiye, SVG'de Turkey
     'United Kingdom': 'England / Great Britain', // CSV'de England / Great Britain
     'Netherlands': 'The Netherlands / Nederland', // CSV'de The Netherlands / Nederland
     'Czech Republic': 'Czech republic' // CSV'de Czech republic

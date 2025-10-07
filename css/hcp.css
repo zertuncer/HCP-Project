@@ -825,6 +825,36 @@
   padding: 24px;
 }
 
+/* Hide scrollbars inside modal for WebKit and Firefox */
+.modal-content::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar,
+.modal-body iframe::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.modal-content,
+.modal-body {
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Full-width primary button variant for Add Provider */
+.add-provider-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.add-provider-btn svg {
+  color: #ffffff; /* plus icon white */
+}
+
+.btn.btn-primary.add-provider-btn {
+  color: #ffffff; /* ensure text white */
+}
+
 .provider-detail {
   display: flex;
   flex-direction: column;
@@ -1057,6 +1087,39 @@
 [data-theme="dark"] .country-marker {
   background: var(--accent);
   border-color: #1e293b;
+}
+
+/* Google Form embed - transparent background and full-width layout */
+.form-embed {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-top: 24px;
+}
+
+.form-embed h3 {
+  margin-bottom: 12px;
+}
+
+.form-embed iframe {
+  width: 100% !important;
+  background: transparent !important;
+  border: 0 !important;
+  display: block;
+  /* Large height to avoid inner scrolling; cannot auto-resize cross-origin */
+  height: 2600px;
+}
+
+@media (max-width: 1024px) {
+  .form-embed iframe {
+    height: 3200px;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-embed iframe {
+    height: 3600px;
+  }
 }
 
 /* Search highlight styles */
